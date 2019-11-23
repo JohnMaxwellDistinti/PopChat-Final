@@ -35,6 +35,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
 public class SignInActivity extends AppCompatActivity implements
@@ -44,6 +45,7 @@ public class SignInActivity extends AppCompatActivity implements
     private static final int RC_SIGN_IN = 9001;
 
     private SignInButton mSignInButton;
+    private SignInButton mAnonymous;
 
     private GoogleApiClient mGoogleApiClient;
 
@@ -56,10 +58,11 @@ public class SignInActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_sign_in);
 
         // Assign fields
-        mSignInButton = (SignInButton) findViewById(R.id.sign_in_button);
+        //mSignInButton = (SignInButton) findViewById(R.id.sign_in_button);
+        mAnonymous = findViewById(R.id.anonymous);
 
         // Set click listeners
-        mSignInButton.setOnClickListener(this);
+        mAnonymous.setOnClickListener(this);
 
         // Configure Google Sign In
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -78,7 +81,7 @@ public class SignInActivity extends AppCompatActivity implements
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.sign_in_button:
+            case R.id.anonymous:
                 signIn();
                 break;
         }
@@ -110,7 +113,7 @@ public class SignInActivity extends AppCompatActivity implements
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
         Log.d(TAG, "firebaseAuthWithGooogle:" + acct.getId());
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
-        mFirebaseAuth.signInWithCredential(credential)
+        /*mFirebaseAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
@@ -127,6 +130,24 @@ public class SignInActivity extends AppCompatActivity implements
                             startActivity(new Intent(SignInActivity.this, MainActivity.class));
                             finish();
                         }
+                    }
+                });*/
+        mFirebaseAuth.signInAnonymously()
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d(TAG, "signInAnonymously:success");
+                            FirebaseUser user = mFirebaseAuth.getCurrentUser();
+                            startActivity(new Intent(SignInActivity.this, MainActivity.class));
+                        } else {
+                            Log.w(TAG, "signInWithCredential", task.getException());
+                            Toast.makeText(SignInActivity.this, "Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+
+                        // ...
                     }
                 });
     }
