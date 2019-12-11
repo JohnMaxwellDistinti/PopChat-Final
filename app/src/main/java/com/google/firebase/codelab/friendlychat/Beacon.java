@@ -30,6 +30,11 @@ public class Beacon {
         return "Location: " + this.title;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return (this == obj);
+    }
+
     public String getTitle(){
         return title;
     }

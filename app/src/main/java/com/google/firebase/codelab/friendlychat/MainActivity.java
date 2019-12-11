@@ -148,11 +148,6 @@ public class MainActivity extends AppCompatActivity
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                         newFrag).commit();
                 break;
-            case R.id.nav_settings:
-                newFrag = new SettingsFragment();
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                        newFrag).commit();
-                break;
             case R.id.sign_out:
                 AuthUI.getInstance().signOut(this);
                 mFirebaseAuth.signOut();

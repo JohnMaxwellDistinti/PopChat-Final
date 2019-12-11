@@ -23,6 +23,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -36,7 +37,7 @@ public class MessagesFragment extends Fragment implements LocationListener{
     protected Context context;
     final double VISIBILITY_RADIUS = 0.002;
     static ArrayList<Beacon> tempList = new ArrayList<>();
-    final List<Beacon> beaconList = new ArrayList<>();
+    static ArrayList<Beacon> beaconList = new ArrayList<>();
     ArrayAdapter<Beacon> arrayAdapter;
     TextView txtLat, txtLong;
     @Nullable
@@ -45,10 +46,11 @@ public class MessagesFragment extends Fragment implements LocationListener{
         View view = inflater.inflate(R.layout.fragment_messages, container, false);
 
         locationManager = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
+
         if (locationManager != null) {
             if (getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
                 locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,this);
+                //locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,this);
             }else{
                 ActivityCompat.requestPermissions(getActivity(),
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
@@ -56,14 +58,6 @@ public class MessagesFragment extends Fragment implements LocationListener{
             }
         }
 
-        Button button = view.findViewById(R.id.startMessage);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getActivity(), MessageActivity.class);
-                startActivity(intent);
-            }
-        });
         arrayAdapter = new ArrayAdapter<>(
                 view.getContext(), // reference to the current activity
                 android.R.layout.simple_list_item_1, // layout for each row in the list view (item in the data source)
@@ -111,7 +105,6 @@ public class MessagesFragment extends Fragment implements LocationListener{
         tempList.add(jundt);
         tempList.add(arcOfSpokane);
         tempList.add(Dooley);
-
         return view;
     }
     public void enterChat(int index){
@@ -125,22 +118,36 @@ public class MessagesFragment extends Fragment implements LocationListener{
         startActivityForResult(i,0);
     }
 
+    public void clearBeacons(){
+        for(int i = 0; i<beaconList.size(); i++){
+            beaconList.remove(i);
+        }
+        /*for(int i = 0; i<tempList.size(); i++){
+            tempList.remove(i);
+        }*/
+    }
+
+    public boolean hasBeacon(ArrayList<Beacon> bList, Beacon beacon){
+        for(int i = 0; i<bList.size(); i++){
+            if(bList.get(i).getTitle() == beacon.getTitle()){
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public void onLocationChanged(Location location){
         //txtLat.setText("Latitude:" + location.getLatitude());
         //txtLong.setText("Longitude:" + location.getLongitude());
         //Log.d("Distance",Double.toString(calcualteUserBeaconDistance(location.getLatitude(), location.getLongitude(), tempList.get(0))));
         //Add beacons in range
-        try {
-            ProgressBar pb = getActivity().findViewById(R.id.loadingBar);
-            pb.setVisibility(ProgressBar.GONE);
-        }catch(Exception e){
 
-        }
         for(int i = 0; i < tempList.size(); i++){
             Beacon tempBeacon = tempList.get(i);
             if(calcualteUserBeaconDistance(location.getLatitude(), location.getLongitude(), tempBeacon) <= VISIBILITY_RADIUS){
-                if(!beaconList.contains(tempBeacon)) {
+                if(!hasBeacon(beaconList, tempBeacon)){
+                    printList();
                     beaconList.add(tempBeacon);
                     arrayAdapter.notifyDataSetChanged();
                 }
@@ -170,6 +177,22 @@ public class MessagesFragment extends Fragment implements LocationListener{
             }
         }
 
+    }
+    public void printTemp(){
+        for(int i = 0; i<beaconList.size(); i++){
+            Log.d(Integer.toString(i), tempList.get(i).getTitle());
+            Log.d(Integer.toString(i), tempList.get(i).getDescription());
+            Log.d(Integer.toString(i), Double.toString(tempList.get(i).getLatitude()));
+            Log.d(Integer.toString(i), Double.toString(tempList.get(i).getLongitude()));
+        }
+    }
+    public void printList(){
+        for(int i = 0; i<beaconList.size(); i++){
+            Log.d(Integer.toString(i), beaconList.get(i).getTitle());
+            Log.d(Integer.toString(i), beaconList.get(i).getDescription());
+            Log.d(Integer.toString(i), Double.toString(beaconList.get(i).getLatitude()));
+            Log.d(Integer.toString(i), Double.toString(beaconList.get(i).getLongitude()));
+        }
     }
 
     @Override
