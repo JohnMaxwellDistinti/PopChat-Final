@@ -77,10 +77,13 @@ public class MainActivity extends AppCompatActivity
 
         mAuthStateListener.onAuthStateChanged(FirebaseAuth.getInstance());
 
-        user = mFirebaseAuth.getCurrentUser();
-        View otherView = getLayoutInflater().inflate(R.layout.nav_header, null);
-//        TextView username = otherView.findViewById(R.id.screenName);
-//        username.setText(user.getDisplayName());
+        if(user != null) {
+            user = mFirebaseAuth.getInstance().getCurrentUser();
+            String username = user.getDisplayName();
+            NavigationView navView = (NavigationView) navigationView.getHeaderView(0);
+            TextView tv = (TextView) navView.findViewById(R.id.screenName);
+            tv.setText(username);
+        }
     }
 
     private void firebaseSetup() {

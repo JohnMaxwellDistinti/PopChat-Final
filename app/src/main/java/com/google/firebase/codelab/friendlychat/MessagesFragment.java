@@ -49,8 +49,8 @@ public class MessagesFragment extends Fragment implements LocationListener{
 
         if (locationManager != null) {
             if (getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
-                //locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,this);
+                //locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,this);
             }else{
                 ActivityCompat.requestPermissions(getActivity(),
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
