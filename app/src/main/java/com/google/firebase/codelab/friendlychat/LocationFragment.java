@@ -1,17 +1,10 @@
 package com.google.firebase.codelab.friendlychat;
 
-import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,10 +14,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
@@ -45,7 +36,7 @@ public class LocationFragment extends Fragment {
         Intent intent = Objects.requireNonNull(getActivity()).getIntent();
         tempList = (ArrayList<Beacon>) intent.getSerializableExtra("beacons");
 
-        mMapView = (MapView) view.findViewById(R.id.mapView);
+        mMapView = view.findViewById(R.id.mapView);
         mMapView.onCreate(savedInstanceState);
 
         mMapView.onResume();

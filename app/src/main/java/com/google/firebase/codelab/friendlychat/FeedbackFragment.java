@@ -18,12 +18,10 @@ public class FeedbackFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_feedback, container, false);
 
-        Button feedback = (Button) view.findViewById(R.id.submit);
-        final TextView tv = (TextView) view.findViewById(R.id.feedback);
+        final TextView tv = view.findViewById(R.id.feedback);
         tv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String feedback = tv.getText().toString();
                 Toast.makeText(getActivity(), "Thank you for your feedback!", Toast.LENGTH_SHORT).show();
                 tv.setText("");
                 //  Send the feedback to firebase

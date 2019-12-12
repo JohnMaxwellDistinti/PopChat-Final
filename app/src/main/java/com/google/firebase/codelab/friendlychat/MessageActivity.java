@@ -15,8 +15,6 @@
  */
 package com.google.firebase.codelab.friendlychat;
 
-import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -28,19 +26,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
-import android.text.InputFilter;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,8 +45,6 @@ import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -63,10 +54,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -97,29 +84,25 @@ public class MessageActivity extends AppCompatActivity
     public static final String THEARC = "The Arc of Spokane";
     public static final String DOOLEY = "Dooley";
     public static String currentChatroom = "messages";
-    private static final int REQUEST_INVITE = 1;
     private static final int REQUEST_IMAGE = 2;
     private static final String LOADING_IMAGE_URL = "https://www.google.com/images/spin-32.gif";
-    public static final int DEFAULT_MSG_LENGTH_LIMIT = 10;
     public static final String ANONYMOUS = "anonymous";
-    private static final String MESSAGE_SENT_EVENT = "message_sent";
-    private String mUsername;
-    private String mPhotoUrl;
+    private String userHandle;
+    private String userPhotoUrl;
     private SharedPreferences mSharedPreferences;
     private GoogleApiClient mGoogleApiClient;
 
-    private Button mSendButton;
-    private RecyclerView mMessageRecyclerView;
-    private LinearLayoutManager mLinearLayoutManager;
-    private EditText mMessageEditText;
-    private ImageView mAddMessageImageView;
+    private Button submitMessage;
+    private RecyclerView MsgRecyclerView;
+    private LinearLayoutManager layoutManager;
+    private EditText messageBox;
 
     // Firebase instance variables
-    private FirebaseAuth mFirebaseAuth;
-    private FirebaseUser mFirebaseUser;
-    private DatabaseReference mFirebaseDatabaseReference;
+    private FirebaseAuth firebaseAuth;
+    private FirebaseUser firebaseUser;
+    private DatabaseReference firebaseRef;
     private FirebaseRecyclerAdapter<PopMessage, MessageViewHolder>
-            mFirebaseAdapter;
+            firebaseAdapterView;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -132,10 +115,10 @@ public class MessageActivity extends AppCompatActivity
                     final Uri uri = data.getData();
                     Log.d(TAG, "Uri: " + uri.toString());
 
-                    PopMessage tempMessage = new PopMessage(null, mUsername, mPhotoUrl,
+                    PopMessage tempMessage = new PopMessage(null, userHandle, userPhotoUrl,
                             LOADING_IMAGE_URL);
                     Log.d("haha", "onActivityResult: "+currentChatroom);
-                    mFirebaseDatabaseReference.child(currentChatroom).push()
+                    firebaseRef.child(currentChatroom).push()
                             .setValue(tempMessage, new DatabaseReference.CompletionListener() {
                                 @Override
                                 public void onComplete(DatabaseError databaseError,
@@ -144,7 +127,7 @@ public class MessageActivity extends AppCompatActivity
                                         String key = databaseReference.getKey();
                                         StorageReference storageReference =
                                                 FirebaseStorage.getInstance()
-                                                        .getReference(mFirebaseUser.getUid())
+                                                        .getReference(firebaseUser.getUid())
                                                         .child(key)
                                                         .child(uri.getLastPathSegment());
 
@@ -159,33 +142,6 @@ public class MessageActivity extends AppCompatActivity
             }
         }
     }
-    /*private void putImageInStorage(StorageReference storageReference, Uri uri, final String key) {
-        storageReference.putFile(uri).addOnCompleteListener(MessageActivity.this,
-                new OnCompleteListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-                        if (task.isSuccessful()) {
-                            task.getResult().getMetadata().getReference().getDownloadUrl()
-                                    .addOnCompleteListener(MessageActivity.this,
-                                            new OnCompleteListener<Uri>() {
-                                                @Override
-                                                public void onComplete(@NonNull Task<Uri> task) {
-                                                    if (task.isSuccessful()) {
-                                                        PopMessage popMessage =
-                                                                new PopMessage(null, mUsername, mPhotoUrl,
-                                                                        task.getResult().toString());
-                                                        mFirebaseDatabaseReference.child(MESSAGES_CHILD).child(key)
-                                                                .setValue(popMessage);
-                                                    }
-                                                }
-                                            });
-                        } else {
-                            Log.w(TAG, "Image upload task was not successful.",
-                                    task.getException());
-                        }
-                    }
-                });
-    }*/
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -196,7 +152,7 @@ public class MessageActivity extends AppCompatActivity
         }
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         // Set default username is anonymous.
-        mUsername = ANONYMOUS;
+        userHandle = ANONYMOUS;
         Bundle extras = getIntent().getExtras();
         if(extras.getString("title").equals("Hemmingson")){
             currentChatroom = HEMMINGSON;
@@ -216,12 +172,12 @@ public class MessageActivity extends AppCompatActivity
         TextView title = findViewById(R.id.titleText);
         title.setText(currentChatroom);
         // Initialize Firebase Auth
-        mFirebaseAuth = FirebaseAuth.getInstance();
-        mFirebaseUser = mFirebaseAuth.getCurrentUser();
-        if (mFirebaseUser != null) {
-            mUsername = mFirebaseUser.getDisplayName();
-            if (mFirebaseUser.getPhotoUrl() != null) {
-                mPhotoUrl = mFirebaseUser.getPhotoUrl().toString();
+        firebaseAuth = FirebaseAuth.getInstance();
+        firebaseUser = firebaseAuth.getCurrentUser();
+        if (firebaseUser != null) {
+            userHandle = firebaseUser.getDisplayName();
+            if (firebaseUser.getPhotoUrl() != null) {
+                userPhotoUrl = firebaseUser.getPhotoUrl().toString();
             }
         }
 
@@ -232,13 +188,13 @@ public class MessageActivity extends AppCompatActivity
 
 
         // Initialize ProgressBar and RecyclerView.
-        mMessageRecyclerView = (RecyclerView) findViewById(R.id.messageRecyclerView);
-        mLinearLayoutManager = new LinearLayoutManager(this);
-        mLinearLayoutManager.setStackFromEnd(true);
-        mMessageRecyclerView.setLayoutManager(mLinearLayoutManager);
+        MsgRecyclerView = findViewById(R.id.messageRecyclerView);
+        layoutManager = new LinearLayoutManager(this);
+        layoutManager.setStackFromEnd(true);
+        MsgRecyclerView.setLayoutManager(layoutManager);
 
         // New child entries
-        mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
+        firebaseRef = FirebaseDatabase.getInstance().getReference();
         SnapshotParser<PopMessage> parser = new SnapshotParser<PopMessage>() {
             @Override
             public PopMessage parseSnapshot(DataSnapshot dataSnapshot) {
@@ -250,12 +206,12 @@ public class MessageActivity extends AppCompatActivity
             }
         };
 
-        DatabaseReference messagesRef = mFirebaseDatabaseReference.child(currentChatroom);
+        DatabaseReference messagesRef = firebaseRef.child(currentChatroom);
         FirebaseRecyclerOptions<PopMessage> options =
                 new FirebaseRecyclerOptions.Builder<PopMessage>()
                         .setQuery(messagesRef, parser)
                         .build();
-        mFirebaseAdapter = new FirebaseRecyclerAdapter<PopMessage, MessageViewHolder>(options) {
+        firebaseAdapterView = new FirebaseRecyclerAdapter<PopMessage, MessageViewHolder>(options) {
             @Override
             public MessageViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
                 LayoutInflater inflater = LayoutInflater.from(viewGroup.getContext());
@@ -303,7 +259,7 @@ public class MessageActivity extends AppCompatActivity
                 viewHolder.messengerTextView.setText(popMessage.getName());
                 if (popMessage.getPhotoUrl() == null) {
                     viewHolder.messengerImageView.setImageDrawable(ContextCompat.getDrawable(MessageActivity.this,
-                            R.drawable.ic_account_circle_black_36dp));
+                            R.drawable.nongmailuser));
                 } else {
                     Glide.with(MessageActivity.this).load(popMessage.getPhotoUrl()).into(viewHolder.messengerImageView);
                 }
@@ -312,25 +268,22 @@ public class MessageActivity extends AppCompatActivity
         };
 
 
-        mFirebaseAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+        firebaseAdapterView.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
             public void onItemRangeInserted(int positionStart, int itemCount) {
                 super.onItemRangeInserted(positionStart, itemCount);
-                int popMessageCount = mFirebaseAdapter.getItemCount();
-                int lastVisiblePosition = mLinearLayoutManager.findLastCompletelyVisibleItemPosition();
-                // If the recycler view is initially being loaded or the
-                // user is at the bottom of the list, scroll to the bottom
-                // of the list to show the newly added message.
+                int popMessageCount = firebaseAdapterView.getItemCount();
+                int lastVisiblePosition = layoutManager.findLastCompletelyVisibleItemPosition();
                 if (lastVisiblePosition == -1 || (positionStart >= (popMessageCount - 1) && lastVisiblePosition == (positionStart - 1))){
-                    mMessageRecyclerView.scrollToPosition(positionStart);
+                    MsgRecyclerView.scrollToPosition(positionStart);
                 }
             }
         });
 
-        mMessageRecyclerView.setAdapter(mFirebaseAdapter);
+        MsgRecyclerView.setAdapter(firebaseAdapterView);
 
-        mMessageEditText = (EditText) findViewById(R.id.messageEditText);
-        mMessageEditText.addTextChangedListener(new TextWatcher() {
+        messageBox = findViewById(R.id.messageEditText);
+        messageBox.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
             }
@@ -338,9 +291,9 @@ public class MessageActivity extends AppCompatActivity
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
                 if (charSequence.toString().trim().length() > 0) {
-                    mSendButton.setEnabled(true);
+                    submitMessage.setEnabled(true);
                 } else {
-                    mSendButton.setEnabled(false);
+                    submitMessage.setEnabled(false);
                 }
             }
 
@@ -349,30 +302,16 @@ public class MessageActivity extends AppCompatActivity
             }
         });
 
-        mSendButton = findViewById(R.id.sendButton);
-        mSendButton.setOnClickListener(new View.OnClickListener() {
+        submitMessage = findViewById(R.id.sendButton);
+        submitMessage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                PopMessage popMessage = new
-                        PopMessage(mMessageEditText.getText().toString(),
-                        mUsername,
-                        mPhotoUrl,
-                        null /* no image */);
-                mFirebaseDatabaseReference.child(currentChatroom).push().setValue(popMessage);
-                mMessageEditText.setText("");
+                PopMessage popMessage = new PopMessage(messageBox.getText().toString(), userHandle, userPhotoUrl, null);
+                firebaseRef.child(currentChatroom).push().setValue(popMessage);
+                messageBox.setText("");
             }
         });
-
-        mAddMessageImageView = (ImageView) findViewById(R.id.addMessageImageView);
-        mAddMessageImageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("image/*");
-                startActivityForResult(intent, REQUEST_IMAGE);
-            }
-        });
+        
     }
 
     @Override
@@ -384,14 +323,14 @@ public class MessageActivity extends AppCompatActivity
 
     @Override
     public void onPause() {
-        mFirebaseAdapter.stopListening();
+        firebaseAdapterView.stopListening();
         super.onPause();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        mFirebaseAdapter.startListening();
+        firebaseAdapterView.startListening();
     }
 
     @Override

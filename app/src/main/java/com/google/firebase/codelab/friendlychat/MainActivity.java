@@ -37,14 +37,12 @@ public class MainActivity extends AppCompatActivity
     private DrawerLayout drawer;
 
     private static final String TAG = "MainActivityTag";
-    private String mUsername;
-    //    private String mPhotoUrl;
-    private GoogleApiClient mGoogleApiClient;
-
-    // Firebase instance variables
-    private FirebaseAuth mFirebaseAuth;
-    FirebaseDatabase mFirebaseDatabase;
-    FirebaseAuth.AuthStateListener mAuthStateListener;
+    private String userHandle;
+    private GoogleApiClient googleAPI;
+    
+    private FirebaseAuth firebaseAuthentication;
+    FirebaseDatabase firebaseDB;
+    FirebaseAuth.AuthStateListener authenticationListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,8 +61,8 @@ public class MainActivity extends AppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .enableAutoManage(this/* FragmentActivity */, this /* OnConnectionFailedListener */)
+        googleAPI = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this, this)
                 .addApi(Auth.GOOGLE_SIGN_IN_API)
                 .build();
 
@@ -75,10 +73,10 @@ public class MainActivity extends AppCompatActivity
 
         firebaseSetup();
 
-        mAuthStateListener.onAuthStateChanged(FirebaseAuth.getInstance());
+        authenticationListener.onAuthStateChanged(FirebaseAuth.getInstance());
 
         if(user != null) {
-            user = mFirebaseAuth.getInstance().getCurrentUser();
+            user = firebaseAuthentication.getInstance().getCurrentUser();
             String username = user.getDisplayName();
             NavigationView navView = (NavigationView) navigationView.getHeaderView(0);
             TextView tv = (TextView) navView.findViewById(R.id.screenName);
@@ -87,10 +85,10 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void firebaseSetup() {
-        mFirebaseDatabase = FirebaseDatabase.getInstance();
+        firebaseDB = FirebaseDatabase.getInstance();
 
-        mFirebaseAuth = FirebaseAuth.getInstance();
-        mAuthStateListener = new FirebaseAuth.AuthStateListener() {
+        firebaseAuthentication = FirebaseAuth.getInstance();
+        authenticationListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
@@ -118,7 +116,7 @@ public class MainActivity extends AppCompatActivity
         if (requestCode == SIGN_IN_REQUEST) {
             if (resultCode == Activity.RESULT_OK) {
                 Log.d(TAG, "onActivityResult: Sign in SUCCEEDED");
-                user = mFirebaseAuth.getCurrentUser();
+                user = firebaseAuthentication.getCurrentUser();
                 setupUserSignedIn(user);
                 View otherView = getLayoutInflater().inflate(R.layout.nav_header, null);
                 TextView username = otherView.findViewById(R.id.screenName);
@@ -153,9 +151,9 @@ public class MainActivity extends AppCompatActivity
                 break;
             case R.id.sign_out:
                 AuthUI.getInstance().signOut(this);
-                mFirebaseAuth.signOut();
-                Auth.GoogleSignInApi.signOut(mGoogleApiClient);
-                mUsername = null;
+                firebaseAuthentication.signOut();
+                Auth.GoogleSignInApi.signOut(googleAPI);
+                userHandle = null;
                 Intent intent = AuthUI.getInstance()
                         .createSignInIntentBuilder()
                         .setIsSmartLockEnabled(false)
@@ -240,14 +238,11 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        // An unresolvable error has occurred and Google APIs (including Sign-In) will not
-        // be available.
-        Log.d(TAG, "onConnectionFailed:" + connectionResult);
         Toast.makeText(this, "Google Play Services error.", Toast.LENGTH_SHORT).show();
     }
 
     private void setupUserSignedIn(FirebaseUser user) {
-        mUsername = user.getDisplayName();
+        userHandle = user.getDisplayName();
 
     }
 }
