@@ -10,7 +10,6 @@
     android:paddingRight="16dp"
     android:paddingTop="16dp"
     android:clickable="true"
-    tools:context="com.google.firebase.codelab.friendlychat.MainActivity"
     android:focusable="true">
 
     <TextView
