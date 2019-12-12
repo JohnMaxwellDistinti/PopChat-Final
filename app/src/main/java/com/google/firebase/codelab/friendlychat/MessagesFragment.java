@@ -49,7 +49,10 @@ public class MessagesFragment extends Fragment implements LocationListener{
 
         if (locationManager != null) {
             if (getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+                //Good for using physical devices
                 //locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
+
+                //Good for using emulator
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,this);
             }else{
                 ActivityCompat.requestPermissions(getActivity(),
@@ -59,8 +62,8 @@ public class MessagesFragment extends Fragment implements LocationListener{
         }
 
         arrayAdapter = new ArrayAdapter<>(
-                view.getContext(), // reference to the current activity
-                android.R.layout.simple_list_item_1, // layout for each row in the list view (item in the data source)
+                view.getContext(),
+                android.R.layout.simple_list_item_1,
                 beaconList // data source
         );
         ListView lv = view.findViewById(R.id.beaconList);
@@ -122,9 +125,6 @@ public class MessagesFragment extends Fragment implements LocationListener{
         for(int i = 0; i<beaconList.size(); i++){
             beaconList.remove(i);
         }
-        /*for(int i = 0; i<tempList.size(); i++){
-            tempList.remove(i);
-        }*/
     }
 
     public boolean hasBeacon(ArrayList<Beacon> bList, Beacon beacon){
@@ -138,10 +138,6 @@ public class MessagesFragment extends Fragment implements LocationListener{
 
     @Override
     public void onLocationChanged(Location location){
-        //txtLat.setText("Latitude:" + location.getLatitude());
-        //txtLong.setText("Longitude:" + location.getLongitude());
-        //Log.d("Distance",Double.toString(calcualteUserBeaconDistance(location.getLatitude(), location.getLongitude(), tempList.get(0))));
-        //Add beacons in range
 
         for(int i = 0; i < tempList.size(); i++){
             Beacon tempBeacon = tempList.get(i);
